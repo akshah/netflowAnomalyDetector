@@ -1,0 +1,11 @@
+use nsas;
+show tables;
+desc ahtflows;
+select INET_NTOA(srcaddr) from nsas.ahtflows;
+select count(distinct dstaddr) from nsas.ahtflows;	
+select TIMESTAMP(FROM_UNIXTIME(min(timestamp))),TIMESTAMP(FROM_UNIXTIME(max(timestamp))) from nsas.ahtflows;
+select * from nsas.ahtflows where srcaddr = '169102341' ;	
+SELECT INET_ATON('10.20.76.5');
+select INET_NTOA(srcaddr),INET_NTOA(dstaddr),FROM_UNIXTIME(timestamp),inpkts,inbytes,dstport,srcport,OutIf,InIf,router,tcpflags,Protocol,INET_NTOA(nextHop) from nsas.ahtflows where srcaddr = INET_ATON('199.30.0.49') and timestamp='1410889370';
+select count(*) from nsas.ahtflows where timestamp='1410931219';
+select max(timestamp) from nsas.ahtflows;

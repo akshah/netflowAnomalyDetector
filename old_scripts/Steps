@@ -1,0 +1,34 @@
+##################################### Always run these in the data_sets directory ######################################
+
+#Read given argus file or pcap file and produce clutered udp flows and split them by minute and compress
+
+#Argus Flow
+racluster -M rmon -r ../../../Archive/netsec/data/dailyargus/2014/01/2014-01-17.0659.r.data.argus.gz - udp and dst net 129.82.0.0/16 -w - | rasplit -M time 1m -w "archive/%Y/%m/%d/%H/argus.%M" && find archive/ -type f | while read file; do gzip -q "$file"; done & 
+#Pcap file
+argus -r some.pcap -w - | racluster -M rmon -r - - udp and dst net 129.82.0.0/16 -w - | rasplit -M time 1m -w "archive/%Y/%m/%d/%H/argus.%M" && find archive/ -type f | while read file; do gzip -q "$file"; done &
+
+
+#Generate all raw key value data (expects ra_split is already done with 1m aggregation. Will write to keyvalue_$DIR is same directory)
+sh ../../src/run_hourly_key_val_generator.sh 2014/01/16 2m &
+
+########################################### End of Data Preparation ####################################################
+
+
+########################################### Generate Feature Matrix ####################################################
+
+#for a given day (input dir) calculate feature matrix
+#sh ../../src/launch_generate_features.sh keyvalue_archive/2013/12/01/00/ | python ../../src/reducer.py > results/20131201_DATASET_feature_matrix_h00 &
+bash ../../src/run_hourly_feature_generator.sh keyvalue_archive/2014/01/16/ netsec &
+
+
+#Use PCA to find anomalous minutes
+bash ../../src/run_hourly_pca.sh keyvalue_archive/2014/01/16/ lander4 &
+
+#Use TDGs to find anomalous IPs
+cat results/20140116_lander4_anomalous_flows_h01 | python ../../src/feed_anomalous_flows.py | python ../../src/flows_to_graph.py | sort -nr > results/ranks_20140116_lander4_feature_matrix_h16_m16
+
+#Use top few to see specific IPs activity (Change $3:$5 $4:$6 positioning if needed)
+cat keyvalue_archive/2014/01/16/16/argus.16.* | awk -F',' '{print$4":"$6" "$3":"$5}' | grep 129.82.45.18 | sortip | less
+
+#Black list Check
+cat ~/public_html/entropy_plots/possible_scanners_201401* | awk '{if($1>1) print$2}' | sed 's/\(.*\)\.\(.*\)\.\(.*\)\.\(.*\)/\4.\3.\2.\1/' | while read line; do dig +short $line.rhsbl.sorbs.net; done

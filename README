@@ -1,0 +1,23 @@
+####################################################################################
+NEWS: NOC Early Warning System
+Author: Anant Shah, anant.shah@ca.com
+####################################################################################
+
+NEWS is designed to read NOC monitoring data and perform analytics for critical
+infrastructure management.
+
+Data source:
+1. BGP routing tables
+2. Netflow
+3. QoS Metrics
+4. Alarms
+
+Algorithms:
+1. Flow Forensics:
+    Entropy
+    Traffic Distribution Graphs
+    Principal Component Analysis
+
+2. QoS analytics
+    Neural Network
+
